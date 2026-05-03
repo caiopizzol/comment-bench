@@ -1,5 +1,7 @@
 # Comment Bench
 
+[![Release](https://img.shields.io/github/v/release/caiopizzol/comment-bench?label=release)](https://github.com/caiopizzol/comment-bench/releases)
+
 Measures whether inline comments steer AI coding agents on small surgical edits.
 
 The deliverable is [`comment-policy.md`](comment-policy.md). Drop it into your `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, or any agent-instruction file.
