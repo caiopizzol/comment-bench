@@ -1,0 +1,12 @@
+{
+	"branches": ["main"],
+	"repositoryUrl": "https://github.com/caiopizzol/comment-bench",
+	"plugins": [
+		"@semantic-release/commit-analyzer",
+		[
+			"semantic-release-ai-notes",
+			{ "model": "claude-sonnet-4-6", "style": "concise" }
+		],
+		"@semantic-release/github"
+	]
+}
