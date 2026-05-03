@@ -1,6 +1,6 @@
 # Comment Bench results
 
-This file describes what shapes of result to expect from the benchmark, not the result of any single run. For a snapshot from a specific model, see the blog post: [Comments only matter when they encode information the code does not](https://caiopizzol.com/writing/comments-matter-when-the-code-does-not).
+This file describes what shapes of result to expect from the benchmark, not the result of any single run. For a snapshot from a specific model, see the blog post: [Comments only matter when the code doesn't](https://caiopizzol.com/writing/comments-matter-when-the-code-does-not).
 
 ## What you should see
 
