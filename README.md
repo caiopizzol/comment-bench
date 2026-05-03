@@ -6,7 +6,7 @@ Measures whether inline comments steer AI coding agents on small surgical edits.
 
 The deliverable is [`comment-policy.md`](comment-policy.md). Drop it into your `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, or any agent-instruction file.
 
-Blog post: [Comments only matter when they encode information the code does not](https://caiopizzol.com/posts/comments-matter-when-the-code-does-not). What the benchmark probes: [`RESULTS.md`](RESULTS.md).
+Blog post: [Comments only matter when they encode information the code does not](https://caiopizzol.com/writing/comments-matter-when-the-code-does-not). What the benchmark probes: [`RESULTS.md`](RESULTS.md).
 
 ## Use this in your repo
 
