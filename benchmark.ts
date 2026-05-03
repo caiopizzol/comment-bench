@@ -1,14 +1,8 @@
 #!/usr/bin/env bun
-/**
- * Comment Bench: prep a workspace and score the result.
- *
- * The benchmark is model-agnostic. Two commands:
- *   prep   - copy agent-visible files for (scenario, treatment) into --out
- *   score  - run hidden invariant tests against an edited workspace
- *
- * The middle step (the agent edit) is up to you. Use Claude Code, Cursor,
- * Codex CLI, Aider, a local model, or your own hands.
- */
+// AIDEV-NOTE: Model-agnostic by design. `prep` and `score` are the only two
+// commands; the agent edit between them is intentionally external. Don't add
+// SDK dependencies, model-specific runners, or built-in agent loops - that
+// breaks the "any model" property the benchmark exists to test.
 import { spawnSync } from "node:child_process";
 import {
 	cpSync,
@@ -74,8 +68,6 @@ function isDir(path: string): boolean {
 	return existsSync(path) && statSync(path).isDirectory();
 }
 
-// ---------- prep ----------
-
 async function prep(
 	scenario: string,
 	treatment: string,
@@ -114,8 +106,6 @@ async function prep(
 	console.log(`task:            ${join(out, "task.md")}`);
 	console.log(`editable:        ${meta.editable.join(", ")}`);
 }
-
-// ---------- score ----------
 
 type SuiteResult = { pass: number; fail: number; raw: string };
 
@@ -184,8 +174,6 @@ async function score(scenario: string, workspace: string): Promise<void> {
 	}
 }
 
-// ---------- list ----------
-
 async function list(): Promise<void> {
 	for (const s of listScenarios()) {
 		const meta = await loadMeta(s);
@@ -193,8 +181,6 @@ async function list(): Promise<void> {
 		console.log(`${s.padEnd(36)} ${label}`);
 	}
 }
-
-// ---------- CLI ----------
 
 const args = process.argv.slice(2);
 const cmd = args[0];
