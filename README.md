@@ -4,7 +4,13 @@
 
 Measures whether inline comments steer AI coding agents on small surgical edits.
 
-The deliverable is [`comment-policy.md`](comment-policy.md). Drop it into your `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, or any agent-instruction file.
+Comment Bench showed when comments matter. Comment Policy tells agents how to write them. Comment Audit keeps them from rotting.
+
+This repo ships three things:
+
+- the benchmark scenarios
+- [`comment-policy.md`](comment-policy.md), a drop-in policy for agent-heavy repos
+- [`comment-audit`](skills/comment-audit/SKILL.md), a skill for auditing stale, vague, or low-signal comments
 
 Blog post: [Comments only matter when the code doesn't](https://caiopizzol.com/writing/comments-matter-when-the-code-does-not). What the benchmark probes: [`RESULTS.md`](RESULTS.md).
 
@@ -15,6 +21,28 @@ curl -O https://raw.githubusercontent.com/caiopizzol/comment-bench/main/comment-
 ```
 
 `@`-import it from your `CLAUDE.md` / `AGENTS.md`, or paste the contents in.
+
+## Audit comments in your repo
+
+Copy the skill into your local agent skills directory.
+
+```bash
+# Codex
+mkdir -p ~/.codex/skills
+cp -R skills/comment-audit ~/.codex/skills/
+
+# Claude Code
+mkdir -p ~/.claude/skills
+cp -R skills/comment-audit ~/.claude/skills/
+```
+
+Then ask your agent:
+
+```text
+Use comment-audit to audit changed files.
+```
+
+The skill reads your local `comment-policy.md`, `CLAUDE.md`, `AGENTS.md`, and project conventions before judging comments. It reports `keep`, `delete`, `update`, or `investigate`; it does not edit files unless you ask. The Codex/OpenAI manifest lives at [`skills/comment-audit/agents/openai.yaml`](skills/comment-audit/agents/openai.yaml).
 
 ## Run the benchmark on any model
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Comment Audit"
+  short_description: "Audit code comments against a local comment policy."
+  default_prompt: "Audit changed files for stale, redundant, vague, or load-bearing comments."
