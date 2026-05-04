@@ -43,8 +43,10 @@ Strong for non-local rules:
 
 ## Treat stale comments as bugs
 
-A stale or misleading comment wastes the exact place where a useful invariant
-could have lived. Update it or delete it during the same change.
+In agent-heavy codebases, comments and docs are part of the prompt surface.
+A stale comment is not harmless decoration. It can become an instruction
+the next agent follows. If a comment no longer reflects the code, update it
+or delete it in the same change.
 
 ## When a task conflicts with a comment
 
