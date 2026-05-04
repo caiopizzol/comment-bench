@@ -92,6 +92,24 @@ Flag these common problems:
 - Comments naming symbols, files, feature flags, APIs, or migrations that no longer exist.
 - Comments far from the code they constrain, especially when the constrained code is likely to be edited without reading the header.
 
+## Diff Freshness Pass
+
+When the user asks for documentation freshness, changed-file review, or a
+base-to-head audit, compare code changes against agent-facing docs:
+
+```bash
+git diff --name-only --diff-filter=ACMR <base>...HEAD
+git diff --unified=0 <base>...HEAD -- <changed-files>
+rg -n "<symbol-or-rule-from-diff>" README.md AGENTS.md CLAUDE.md docs/ .cursorrules 2>/dev/null
+```
+
+Treat `README.md`, `AGENTS.md`, `CLAUDE.md`, architecture notes, runbooks,
+and tutorials as comment-like prompt surface. If a changed symbol, feature
+flag, business rule, route, migration, config key, or public workflow is
+documented, check whether the prose still matches the code. Classify stale
+or unverifiable docs the same way as stale inline comments: `update`,
+`delete`, or `investigate`.
+
 ## Reading Nearby Code
 
 For each candidate comment:
