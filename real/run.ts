@@ -11,7 +11,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { countComments, STRIPPABLE } from "./strip-comments";
+import { countComments, referenceRule, STRIPPABLE } from "./strip-comments";
 import { stripTree } from "./strip-tree";
 import { ARMS, type Arm, loadSuite, type Suite, type Task } from "./suite";
 
@@ -86,10 +86,16 @@ export function prep(task: Task, arm: Arm, dir: string) {
 	);
 	if (tar.status !== 0) throw new Error(`archive failed: ${tar.stderr}`);
 	let strip = null;
-	if (arm === "stripped") {
+	if (arm !== "comments") {
 		must("git", ["init", "-q"], dir);
 		must("git", ["add", "-A"], dir);
-		strip = stripTree(dir, new Set());
+		const keep =
+			arm === "references"
+				? referenceRule(
+						new RegExp(SUITE.ticketPattern ?? "\\b[A-Z][A-Z0-9]+-\\d+\\b"),
+					)
+				: undefined;
+		strip = stripTree(dir, new Set(), keep);
 		if (strip.mismatched.length || strip.failed.length) {
 			throw new Error(
 				`strip changed code: ${strip.mismatched.concat(strip.failed).join(", ")}`,
@@ -488,6 +494,9 @@ if (import.meta.main) {
 	const concurrency = Number(flag("concurrency", "2"));
 	const timeoutMs = Number(flag("timeout-min", "40")) * 60_000;
 	const only = flag("tasks", "").split(",").filter(Boolean);
+	const selectedArms = flag("arms", "comments,stripped")
+		.split(",")
+		.filter((a): a is Arm => (ARMS as readonly string[]).includes(a));
 	const out = resolve(
 		flag("out", join(HERE, "..", "outputs", `real_${Date.now()}`)),
 	);
@@ -506,7 +515,7 @@ if (import.meta.main) {
 		for (const task of SUITE.tasks.filter(
 			(t) => !only.length || only.includes(t.id),
 		)) {
-			const arms = Math.random() < 0.5 ? [...ARMS] : [...ARMS].reverse();
+			const arms = [...selectedArms].sort(() => Math.random() - 0.5);
 			for (const arm of arms) {
 				if (!seen.has(`${task.id}__${arm}__${n}`)) jobs.push([task, arm, n]);
 			}

@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 type Row = {
 	task: string;
-	arm: "comments" | "stripped";
+	arm: string;
 	model: string;
 	valid: boolean;
 	passed: boolean;
@@ -58,6 +58,12 @@ function report(dir: string) {
 		`trials: ${rows.length}, valid: ${valid.length}, looked outside snapshot: ${rows.filter((r) => (r.suspicious_lookups ?? 0) > 0).length}`,
 	);
 	const tasks = [...new Set(valid.map((r) => r.task))].sort();
+	const arms = [
+		"comments",
+		...[...new Set(valid.map((r) => r.arm))]
+			.filter((a) => a !== "comments")
+			.sort(),
+	];
 	const metric = (r: Row, k: keyof Row) => Number(r[k] ?? 0);
 	const keys: (keyof Row)[] = [
 		"passed",
@@ -70,7 +76,7 @@ function report(dir: string) {
 	console.log(`\n| task | arm | n | ${keys.join(" | ")} |`);
 	console.log(`|---|---|---|${keys.map(() => "---").join("|")}|`);
 	for (const t of tasks) {
-		for (const arm of ["comments", "stripped"] as const) {
+		for (const arm of arms) {
 			const g = valid.filter((r) => r.task === t && r.arm === arm);
 			const cells = keys.map((k) => {
 				const v = mean(g.map((r) => metric(r, k)));
@@ -79,6 +85,15 @@ function report(dir: string) {
 			console.log(`| ${t} | ${arm} | ${g.length} | ${cells.join(" | ")} |`);
 		}
 	}
+	for (const arm of arms.slice(1)) effects(valid, tasks, arm, metric);
+}
+
+function effects(
+	valid: Row[],
+	tasks: string[],
+	arm: string,
+	metric: (r: Row, k: keyof Row) => number,
+) {
 	const pairs = (k: keyof Row) =>
 		tasks
 			.map(
@@ -88,13 +103,13 @@ function report(dir: string) {
 							.filter((r) => r.task === t && r.arm === "comments")
 							.map((r) => metric(r, k)),
 						valid
-							.filter((r) => r.task === t && r.arm === "stripped")
+							.filter((r) => r.task === t && r.arm === arm)
 							.map((r) => metric(r, k)),
 					] as [number[], number[]],
 			)
 			.filter(([a, b]) => a.length && b.length);
 	console.log(
-		"\nEffect of stripping comments (stripped minus comments), task-clustered bootstrap 95% CI:",
+		`\nEffect of ${arm} vs comments (${arm} minus comments), task-clustered bootstrap 95% CI:`,
 	);
 	for (const k of ["passed", "fixed_fraction"] as (keyof Row)[]) {
 		const p = pairs(k);

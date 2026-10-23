@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { sameCode, stripComments } from "./strip-comments";
+import { referenceRule, sameCode, stripComments } from "./strip-comments";
 
 const strip = (src: string, file = "f.ts") => stripComments(src, file);
 
@@ -59,5 +59,39 @@ describe("jsdoc", () => {
 		const out = stripComments(src, "f.ts");
 		expect(out).toBe("export const a = 1;\n");
 		expect(sameCode(src, out, "f.ts")).toBe(true);
+	});
+});
+
+describe("referenceRule", () => {
+	const keep = referenceRule(/\bSD-\d+\b/);
+	const src = [
+		"// SD-1234: Word drops empty runs here, so we keep one.",
+		"const a = 1;",
+		"// Per §17.11.23 the separator spans part of the extent.",
+		"const b = 2;",
+		"// We loop here because the list can be empty.",
+		"const c = 3;",
+		"// SD-99 started this, but the rest of the story is long",
+		"// and goes on for several lines explaining history",
+		"// that no longer matters to anyone.",
+		"const d = 4;",
+		"/* see https://github.com/acme/repo/issues/42 */",
+		"const e = 5;",
+		"",
+	].join("\n");
+
+	it("keeps short reference comments and drops everything else", () => {
+		const out = stripComments(src, "f.ts", keep);
+		expect(out).toContain("SD-1234");
+		expect(out).toContain("§17.11.23");
+		expect(out).toContain("issues/42");
+		expect(out).not.toContain("We loop here");
+		expect(out).not.toContain("SD-99");
+		expect(sameCode(src, out, "f.ts")).toBe(true);
+	});
+
+	it("leaves directives alone", () => {
+		const d = "// @ts-expect-error x\nconst a: number = 'x';\n";
+		expect(stripComments(d, "f.ts", keep)).toBe(d);
 	});
 });

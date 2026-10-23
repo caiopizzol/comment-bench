@@ -18,10 +18,11 @@ export type Suite = {
 	install: string[];
 	installDirFor: (changedFile: string) => string;
 	vitest: string[];
+	ticketPattern?: string;
 	tasks: Task[];
 };
 
-export const ARMS = ["comments", "stripped"] as const;
+export const ARMS = ["comments", "stripped", "references"] as const;
 export type Arm = (typeof ARMS)[number];
 
 export async function loadSuite(path: string): Promise<Suite> {

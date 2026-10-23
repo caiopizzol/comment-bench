@@ -52,6 +52,52 @@ function commentRanges(source: string, file: string): [number, number][] {
 		.sort((a, b) => a[0] - b[0]);
 }
 
+export type KeepRule = (comment: string) => boolean;
+
+const SPEC_REF =
+	/§\s*\d|\bECMA-\d{3}\b|\bISO\/IEC\s*\d{4,5}\b|\bRFC\s?\d{3,5}\b/;
+const ISSUE_REF =
+	/https?:\/\/\S*(?:\/issues\/\d+|\/pull\/\d+|crbug\.com\/\d+|bugs\.\S+|bugzilla\S*|issuetracker\S*)/i;
+
+export function referenceRule(ticket: RegExp, maxLines = 2): KeepRule {
+	return (comment) =>
+		comment.split("\n").length <= maxLines &&
+		(ticket.test(comment) || SPEC_REF.test(comment) || ISSUE_REF.test(comment));
+}
+
+function blocks(
+	source: string,
+	ranges: [number, number][],
+): [number, number][][] {
+	const out: [number, number][][] = [];
+	for (const range of ranges) {
+		const current = out.at(-1);
+		const last = current?.at(-1);
+		if (
+			current &&
+			last &&
+			/^[ \t]*\n[ \t]*$/.test(source.slice(last[1], range[0]))
+		) {
+			current.push(range);
+		} else {
+			out.push([range]);
+		}
+	}
+	return out;
+}
+
+function removable(
+	source: string,
+	file: string,
+	keep?: KeepRule,
+): [number, number][] {
+	const ranges = commentRanges(source, file);
+	if (!keep) return ranges;
+	return blocks(source, ranges)
+		.filter((b) => !keep(source.slice(b[0]?.[0], b.at(-1)?.[1])))
+		.flat();
+}
+
 export function countComments(source: string, file: string): number {
 	const body = source.startsWith("#!")
 		? source.slice(source.indexOf("\n") + 1)
@@ -59,14 +105,18 @@ export function countComments(source: string, file: string): number {
 	return commentRanges(body, file).length;
 }
 
-export function stripComments(source: string, file: string): string {
+export function stripComments(
+	source: string,
+	file: string,
+	keep?: KeepRule,
+): string {
 	const shebang = source.startsWith("#!")
 		? source.slice(0, source.indexOf("\n") + 1)
 		: "";
 	const body = source.slice(shebang.length);
 	let out = "";
 	let cursor = 0;
-	for (const [pos, end] of commentRanges(body, file)) {
+	for (const [pos, end] of removable(body, file, keep)) {
 		if (pos < cursor) continue;
 		const lineStart = body.lastIndexOf("\n", pos - 1) + 1;
 		const nl = body.indexOf("\n", end);
@@ -122,23 +172,29 @@ export function sameCode(before: string, after: string, file: string): boolean {
 	return a.length === b.length && a.every((t, i) => t === b[i]);
 }
 
-export function stripFile(path: string): {
+export function stripFile(
+	path: string,
+	keep?: KeepRule,
+): {
 	changed: boolean;
 	removed: number;
+	kept: number;
 	identical: boolean;
 } {
 	const before = readFileSync(path, "utf8");
-	const ranges = commentRanges(
-		before.startsWith("#!") ? before.slice(before.indexOf("\n") + 1) : before,
-		path,
-	);
+	const body = before.startsWith("#!")
+		? before.slice(before.indexOf("\n") + 1)
+		: before;
+	const total = commentRanges(body, path).length;
+	const ranges = removable(body, path, keep);
 	if (ranges.length === 0)
-		return { changed: false, removed: 0, identical: true };
-	const after = stripComments(before, path);
+		return { changed: false, removed: 0, kept: total, identical: true };
+	const after = stripComments(before, path, keep);
 	writeFileSync(path, after);
 	return {
 		changed: after !== before,
 		removed: ranges.length,
+		kept: total - ranges.length,
 		identical: sameCode(before, after, path),
 	};
 }
