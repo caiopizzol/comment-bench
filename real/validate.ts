@@ -19,6 +19,7 @@ function sh(cmd: string, args: string[], cwd: string) {
 		encoding: "utf8",
 		maxBuffer: 512 * 1024 * 1024,
 		timeout: 15 * 60_000,
+		env: { ...process.env, CI: "true" },
 	});
 	return { code: r.status ?? -1, out: (r.stdout ?? "") + (r.stderr ?? "") };
 }

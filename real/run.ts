@@ -42,7 +42,7 @@ function sh(cmd: string, args: string[], cwd: string, env?: NodeJS.ProcessEnv) {
 		cwd,
 		encoding: "utf8",
 		maxBuffer: 512 * 1024 * 1024,
-		env: env ?? process.env,
+		env: env ?? { ...process.env, CI: "true" },
 	});
 	return { code: r.status ?? -1, out: (r.stdout ?? "") + (r.stderr ?? "") };
 }
@@ -492,13 +492,24 @@ if (import.meta.main) {
 		flag("out", join(HERE, "..", "outputs", `real_${Date.now()}`)),
 	);
 	mkdirSync(out, { recursive: true });
+	const resultsPath = join(out, "results.jsonl");
+	const seen = new Set(
+		existsSync(resultsPath)
+			? readFileSync(resultsPath, "utf8")
+					.split("\n")
+					.filter(Boolean)
+					.map((l) => JSON.parse(l).id as string)
+			: [],
+	);
 	const jobs: [Task, Arm, number][] = [];
 	for (let n = 1; n <= trials; n++) {
 		for (const task of SUITE.tasks.filter(
 			(t) => !only.length || only.includes(t.id),
 		)) {
 			const arms = Math.random() < 0.5 ? [...ARMS] : [...ARMS].reverse();
-			for (const arm of arms) jobs.push([task, arm, n]);
+			for (const arm of arms) {
+				if (!seen.has(`${task.id}__${arm}__${n}`)) jobs.push([task, arm, n]);
+			}
 		}
 	}
 	writeFileSync(
