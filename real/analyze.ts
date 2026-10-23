@@ -116,8 +116,14 @@ function report(dir: string) {
 			p.flatMap((x) => x[1]),
 		);
 		const [lo, hi] = bootstrap(p, ratio);
+		const logs = p.map(([a, b]) => Math.log(mean(b) / mean(a)));
+		const geo = (xs: number[]) => Math.exp(mean(xs)) - 1;
+		const draws = Array.from({ length: 4000 }, () =>
+			geo(logs.map(() => logs[Math.floor(Math.random() * logs.length)] ?? 0)),
+		).sort((x, y) => x - y);
+		const pct = (x: number | undefined) => ((x ?? Number.NaN) * 100).toFixed(1);
 		console.log(
-			`- ${k}: ${(point * 100).toFixed(1)}% [${(lo * 100).toFixed(1)}, ${(hi * 100).toFixed(1)}]`,
+			`- ${k}: pooled ${pct(point)}% [${pct(lo)}, ${pct(hi)}]; per-task geometric mean ${pct(geo(logs))}% [${pct(draws[100])}, ${pct(draws[3900])}]`,
 		);
 	}
 }
