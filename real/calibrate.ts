@@ -57,9 +57,20 @@ if (import.meta.main) {
 	);
 	mkdirSync(out, { recursive: true });
 	writeFileSync(join(out, "tasks.json"), JSON.stringify(tasks, null, 2));
-	const jobs = tasks.flatMap((t) =>
-		Array.from({ length: trials }, (_, n) => [t, n + 1] as const),
+	const resultsPath = join(out, "results.jsonl");
+	const seen = new Set(
+		existsSync(resultsPath)
+			? readFileSync(resultsPath, "utf8")
+					.split("\n")
+					.filter(Boolean)
+					.map((l) => JSON.parse(l).id as string)
+			: [],
 	);
+	const jobs = tasks
+		.filter((t) => !seen.has(`${t.id}__comments__1`))
+		.flatMap((t) =>
+			Array.from({ length: trials }, (_, n) => [t, n + 1] as const),
+		);
 	let next = 0;
 	await Promise.all(
 		Array.from({ length: concurrency }, async () => {

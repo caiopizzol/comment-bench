@@ -102,7 +102,7 @@ if (import.meta.main) {
 					!support.includes(f) &&
 					!/\.spec\./.test(f),
 			);
-			const installDir = suite.installDirFor(changed[0]!);
+			const installDir = suite.installDirFor(tests[0]!);
 			const install = sh(
 				suite.install[0]!,
 				suite.install.slice(1),
